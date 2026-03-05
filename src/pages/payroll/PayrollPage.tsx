@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { payrollApi } from '../../api/payroll'
 import { formatKES } from '../../utils/currency'
@@ -7,8 +9,13 @@ import { getPayrollStatusBadge } from '../../components/ui/Badge'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
+import Modal from '../../components/ui/Modal'
+import CreatePayrollForm from '../../components/forms/CreatePayrollForm'
 
 export default function PayrollPage() {
+  const navigate = useNavigate()
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
   const { data, isLoading } = useQuery({
     queryKey: ['payrolls'],
     queryFn: () => payrollApi.list(),
@@ -21,7 +28,7 @@ export default function PayrollPage() {
           <h1 className="text-2xl font-bold text-gray-900">Payroll Runs</h1>
           <p className="text-gray-500 mt-1">Manage and process employee payroll</p>
         </div>
-        <Button>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="w-4 h-4" />
           New Payroll Run
         </Button>
@@ -48,7 +55,11 @@ export default function PayrollPage() {
                 {data?.data.map(run => {
                   const badge = getPayrollStatusBadge(run.status)
                   return (
-                    <tr key={run.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={run.id}
+                      onClick={() => navigate(`/payroll/${run.id}`)}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
                       <td className="py-3 font-medium text-gray-800">{run.title}</td>
                       <td className="py-3 text-gray-600">
                         {formatDate(run.pay_period_start)} — {formatDate(run.pay_period_end)}
@@ -66,6 +77,13 @@ export default function PayrollPage() {
           </div>
         )}
       </Card>
+
+      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Create Payroll Run">
+        <CreatePayrollForm
+          onSuccess={() => setShowCreateModal(false)}
+          onCancel={() => setShowCreateModal(false)}
+        />
+      </Modal>
     </div>
   )
 }

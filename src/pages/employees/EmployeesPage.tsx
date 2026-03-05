@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Plus, UserCheck } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import { employeesApi } from '../../api/employees'
 import { formatDate } from '../../utils/date'
+import { useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Card from '../../components/ui/Card'
+import Modal from '../../components/ui/Modal'
+import AddEmployeeForm from '../../components/forms/AddEmployeeForm'
 
 export default function EmployeesPage() {
-  const [search, setSearch] = useState('')
-  const [page, setPage]     = useState(1)
+  const [search, setSearch]         = useState('')
+  const [page, setPage]             = useState(1)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const navigate = useNavigate()
 
   const { data, isLoading } = useQuery({
     queryKey: ['employees', page, search],
@@ -23,14 +28,13 @@ export default function EmployeesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
           <p className="text-gray-500 mt-1">{data?.total || 0} total employees</p>
         </div>
-        <Button>
+        <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4" />
           Add Employee
         </Button>
       </div>
 
       <Card>
-        {/* Search */}
         <div className="flex items-center gap-3 mb-6">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -45,7 +49,6 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        {/* Table */}
         {isLoading ? (
           <div className="text-center py-12 text-gray-400">Loading employees...</div>
         ) : (
@@ -63,12 +66,12 @@ export default function EmployeesPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {data?.data.map(emp => (
-                  <tr key={emp.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={emp.id} onClick={() => navigate(`/employees/${emp.id}`)} className="hover:bg-gray-50 transition-colors cursor-pointer">
                     <td className="py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                           <span className="text-blue-700 text-xs font-semibold">
-                            {emp.full_name.split(' ').map(n => n[0]).join('').slice(0,2)}
+                            {emp.full_name.split(' ').map((n: string) => n[0]).join('').slice(0,2)}
                           </span>
                         </div>
                         <div>
@@ -94,7 +97,6 @@ export default function EmployeesPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {data && data.total > data.per_page && (
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
             <p className="text-sm text-gray-500">
@@ -107,6 +109,13 @@ export default function EmployeesPage() {
           </div>
         )}
       </Card>
+
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add New Employee">
+        <AddEmployeeForm
+          onSuccess={() => setShowAddModal(false)}
+          onCancel={() => setShowAddModal(false)}
+        />
+      </Modal>
     </div>
   )
 }
