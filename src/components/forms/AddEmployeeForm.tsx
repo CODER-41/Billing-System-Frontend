@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { employeesApi } from '../../api/employees'
+import { useToast } from '../../store/toastStore'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
 import Button from '../ui/Button'
@@ -18,7 +19,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
-interface AddEmployeeFormProps {
+interface Props {
   onSuccess: () => void
   onCancel: () => void
 }
@@ -40,8 +41,9 @@ const employmentTypeOptions = [
   { value: 'contract',  label: 'Contract'  },
 ]
 
-export default function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeFormProps) {
+export default function AddEmployeeForm({ onSuccess, onCancel }: Props) {
   const queryClient = useQueryClient()
+  const toast = useToast()
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -52,71 +54,31 @@ export default function AddEmployeeForm({ onSuccess, onCancel }: AddEmployeeForm
     mutationFn: (data: FormData) => employeesApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
+      toast.success('Employee added successfully!')
       onSuccess()
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to create employee')
     }
   })
 
-  const onSubmit = (data: FormData) => mutation.mutate(data)
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {mutation.isError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">
-            {(mutation.error as any)?.response?.data?.message || 'Failed to create employee'}
-          </p>
-        </div>
-      )}
+    <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
-          <Input
-            label="Full Name"
-            placeholder="e.g. Jane Wanjiku"
-            error={errors.full_name?.message}
-            {...register('full_name')}
-          />
+          <Input label="Full Name" placeholder="e.g. Jane Wanjiku" error={errors.full_name?.message} {...register('full_name')} />
         </div>
-        <Input
-          label="Email Address"
-          type="email"
-          placeholder="jane@company.co.ke"
-          error={errors.email?.message}
-          {...register('email')}
-        />
-        <Input
-          label="Phone Number"
-          placeholder="0712345678"
-          error={errors.phone?.message}
-          {...register('phone')}
-        />
-        <Select
-          label="Department"
-          options={departmentOptions}
-          error={errors.department?.message}
-          {...register('department')}
-        />
-        <Input
-          label="Position / Job Title"
-          placeholder="e.g. Senior Accountant"
-          error={errors.position?.message}
-          {...register('position')}
-        />
+        <Input label="Email Address" type="email" placeholder="jane@company.co.ke" error={errors.email?.message} {...register('email')} />
+        <Input label="Phone Number" placeholder="0712345678" error={errors.phone?.message} {...register('phone')} />
+        <Select label="Department" options={departmentOptions} error={errors.department?.message} {...register('department')} />
+        <Input label="Position / Job Title" placeholder="e.g. Senior Accountant" error={errors.position?.message} {...register('position')} />
         <div className="col-span-2">
-          <Select
-            label="Employment Type"
-            options={employmentTypeOptions}
-            error={errors.employment_type?.message}
-            {...register('employment_type')}
-          />
+          <Select label="Employment Type" options={employmentTypeOptions} error={errors.employment_type?.message} {...register('employment_type')} />
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit" className="flex-1" loading={mutation.isPending}>
-          Add Employee
-        </Button>
+        <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>Cancel</Button>
+        <Button type="submit" className="flex-1" loading={mutation.isPending}>Add Employee</Button>
       </div>
     </form>
   )

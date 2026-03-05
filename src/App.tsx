@@ -11,6 +11,7 @@ import PayrollDetailPage from './pages/payroll/PayrollDetailPage'
 import TransfersPage from './pages/transfers/TransfersPage'
 import ReportsPage from './pages/reports/ReportsPage'
 import UsersPage from './pages/users/UsersPage'
+import Toaster from './components/ui/Toaster'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/users"         element={<UsersPage />} />
           </Route>
         </Routes>
+        <Toaster />
       </BrowserRouter>
     </QueryClientProvider>
   )

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { employeesApi } from '../../api/employees'
+import { useToast } from '../../store/toastStore'
 import Input from '../ui/Input'
 import Button from '../ui/Button'
 import { useState } from 'react'
@@ -29,6 +30,7 @@ interface Props {
 
 export default function SetSalaryForm({ employeeId, onSuccess, onCancel }: Props) {
   const queryClient = useQueryClient()
+  const toast = useToast()
   const [preview, setPreview] = useState<number | null>(null)
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>({
@@ -68,7 +70,11 @@ export default function SetSalaryForm({ employeeId, onSuccess, onCancel }: Props
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salary', employeeId] })
+      toast.success('Salary structure saved successfully!')
       onSuccess()
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to save salary')
     }
   })
 
